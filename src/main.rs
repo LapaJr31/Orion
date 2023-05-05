@@ -24,13 +24,16 @@ fn  main() {
 
 
     loop {
-        if let Event::Key(event) = event::read()
+        if event::poll(Duration::from_secs(60))
+            .expect("Error") {
+
+         if let Event::Key(event) = event::read()
             .expect("Failed to read the line") {
 
                 match event {
                     KeyEvent {
 
-                        code: KeyCode::Char('q'), // exiting on press of q
+                        code: KeyCode::Char('q'), // exiting on press of crtl-q
                         modifiers: event::KeyModifiers::CONTROL, ..
 
                     } => break,
@@ -43,6 +46,11 @@ fn  main() {
             }
                 println!("{:?}\r", event);
         };
+
+    } else {
+        println!("No input yet\r");
+    }
+
 
 
 
