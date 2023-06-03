@@ -68,6 +68,7 @@ impl io::Write for EditorContents {
 struct Output {
     winsize: (usize, usize),
     editor_contents: EditorContents,
+    cursor_controller: CursContr,
 }
 
 impl Output {
@@ -134,9 +135,14 @@ impl Output {
 
         self.rows();
 
+        let cursor_x = self.cursor_controller.cursor_x;
+        let cursor_y = self cursor_controller.cursor_y;
+
         queue!(
-            self.editor_contents,
-            cursor::MoveTo(0,0), cursor::Show )?;
+        cursor::MoveTo(cursor_x as u16, cursor_y as u16),
+        cursor::Show
+        )?;
+
         self.editor_contents.flush()
     }
 }
@@ -193,6 +199,20 @@ impl Editor {
 }
 
 
+struct CursContr {
+    cursor_x: usize,
+    cursor_y: usize,
+}
+
+impl CursContr {
+    fn new() -> CursContr {
+        Self {
+            cursor_y : 0,
+            cursor_x : 0,
+        }
+    }
+}
+
 
 // reading the inputs
 fn  main() -> crossterm::Result<()> {
@@ -210,3 +230,4 @@ fn  main() -> crossterm::Result<()> {
 
 
 }
+
