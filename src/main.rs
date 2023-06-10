@@ -81,6 +81,7 @@ impl Output {
         Self {
             winsize,
             editor_contents: EditorContents::new(),
+            cursor_controller: CursContr::new(winsize),
         }
     }
 
@@ -136,14 +137,19 @@ impl Output {
         self.rows();
 
         let cursor_x = self.cursor_controller.cursor_x;
-        let cursor_y = self cursor_controller.cursor_y;
+        let cursor_y = self.cursor_controller.cursor_y;
 
         queue!(
+        self.editor_contents,
         cursor::MoveTo(cursor_x as u16, cursor_y as u16),
         cursor::Show
         )?;
 
         self.editor_contents.flush()
+    }
+
+    fn move_curs(&mut self,direction: KeyCode) {
+        self.cursor_controller.move_curs(direction);
     }
 }
 
@@ -179,21 +185,47 @@ impl Editor {
         }
     }
 
-    fn keypress(&self) -> crossterm::Result<bool> {
+    fn keypress(&mut self) -> crossterm::Result<bool> {
 
         match self.reader.read_key()? {
 
             KeyEvent {
-            code: KeyCode::Char('q'),
-            modifiers: event::KeyModifiers::CONTROL, ..
-        } => return Ok(false),
+                code: KeyCode::Char('q'),
+                modifiers: event::KeyModifiers::CONTROL, ..
+            } => return Ok(false),
+
+            KeyEvent {
+                code: direction @ (KeyCode::Up
+                    | KeyCode::Down
+                    | KeyCode::Left
+                    | KeyCode::Right
+                    | KeyCode::Home
+                    | KeyCode::End
+                ),
+                modifiers: KeyModifiers::NONE, ..
+            } => self.output.move_curs(direction),
+
+            KeyEvent {
+                code: val @
+                    (KeyCode::PageUp
+                    |KeyCode::PageDown
+                    ),
+                modifiers: KeyModifiers::NONE, ..
+
+            } => (0..self.output.winsize.1).for_each(|_| {
+                    self.output.move_curs(if matches!(val, KeyCode::PageUp) {
+                        KeyCode::Up
+                    }else{
+                        KeyCode::Down
+                    });
+                }),
         _ => {}
         }
         Ok(true)
     }
 
     fn run(&mut self) -> crossterm::Result<bool> {
-        self.output.refresh_screen();
+        self.output.refresh_screen()?;
         self.keypress()
     }
 }
@@ -202,16 +234,51 @@ impl Editor {
 struct CursContr {
     cursor_x: usize,
     cursor_y: usize,
+    scr_columns: usize,
+    scr_rows: usize,
 }
 
 impl CursContr {
-    fn new() -> CursContr {
+    fn new(winsize: (usize, usize)) -> CursContr {
+
         Self {
-            cursor_y : 0,
-            cursor_x : 0,
+            cursor_x: 0,
+            cursor_y: 0,
+            scr_columns: winsize.0,
+            scr_rows: winsize.1,
+        }
+
+    }
+
+
+    fn move_curs(&mut self, direction: KeyCode) {
+        match direction {
+            KeyCode::Up => {
+                self.cursor_y = self.cursor_y.saturating_sub(1);
+            }
+            KeyCode::Left => {
+                if self.cursor_x != 0 {
+                    self.cursor_x -= 1;
+                }
+            }
+            KeyCode::Down => {
+                if self.cursor_y != self.scr_rows - 1 {
+                    self.cursor_y += 1;
+                }
+            }
+            KeyCode::Right => {
+                if self.cursor_x != self.scr_columns - 1 {
+                    self.cursor_x += 1;
+                }
+            }
+
+            KeyCode::End => self.cursor_x = self.scr_columns -1,
+            KeyCode::Home => self.cursor_x = 0,
+            _ => unimplemented!(),
         }
     }
 }
+
 
 
 // reading the inputs
