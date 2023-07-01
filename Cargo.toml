@@ -1,9 +1,19 @@
 [package]
-name = "Orion"
+name = "orion"
 version = "0.1.0"
 edition = "2021"
+authors = ["Orion team <jarlat04@lapuas.xyz>"]
+license = "MIT"
+description = "A simple text editor"
+readme = "README.md"
+homepage = "https://github.com/Lapuas/Orion"
+repository = "https://github.com/Lapuas/Orion"
+keywords = ["cli", "text", "editor"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crossterm = "0.26.1"
+crossterm = "0.21.0"
+
+
