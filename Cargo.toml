@@ -2,7 +2,7 @@
 name = "orion"
 version = "0.1.0"
 edition = "2021"
-authors = ["LapaJr31 <jarlat04@lapuas.xyz>"]
+authors = ["Lapuas"]
 license = "MIT"
 description = "A simple text editor"
 readme = "README.md"
